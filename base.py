@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 
-
+import torch
 
 class BaseEnv(gym.Env):
     def __init__(self, config):
