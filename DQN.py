@@ -39,7 +39,7 @@ class FCN(nn.Module):
     
 
 class DQN:
-    def __init__(self, alpha, state_dim, action_dim, hidden_dim1, hidden_dim2, # 全连接网络相关
+    def __init__(self, alpha, state_dim, action_dim, hidden_dim1, hidden_dim2, chpt_dir, # 全连接网络相关
                  tau, gamma, epsilon, eps_min, eps_dec, # DQN算法相关
                  max_size, batch_size) -> None:
         self.alpha = alpha
@@ -47,6 +47,7 @@ class DQN:
         self.action_dim = action_dim
         self.hidden_dim1 = hidden_dim1
         self.hidden_dim2 = hidden_dim2
+        self.ckpt_dir = chpt_dir
         self.tau = tau
         self.gamma = gamma
         self.epsilon = epsilon
@@ -57,3 +58,6 @@ class DQN:
 
         self.eval_nn = FCN(self.alpha, self.state_dim, self.action_dim, self.hidden_dim1, self.hidden_dim2)
         self.target_nn = FCN(self.alpha, self.state_dim, self.action_dim, self.hidden_dim1, self.hidden_dim2)
+
+        
+    
