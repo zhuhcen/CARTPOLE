@@ -3,6 +3,9 @@ import numpy as np
 
 class ReplayBuffer:
     def __init__(self, state_dim, action_dim, max_size, batch_size) -> None:
+        '''
+        传入状态维度state_dim，动作维度action_dim，replaybuffer最大值max_size，每次取出的数据数量batch_size
+        '''
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.max_size = max_size
