@@ -2,6 +2,7 @@ from typing import Any, Mapping
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from ReplayBuffer import ReplayBuffer
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -59,5 +60,14 @@ class DQN:
         self.eval_nn = FCN(self.alpha, self.state_dim, self.action_dim, self.hidden_dim1, self.hidden_dim2)
         self.target_nn = FCN(self.alpha, self.state_dim, self.action_dim, self.hidden_dim1, self.hidden_dim2)
 
+        self.replay_buffer = ReplayBuffer(self.state_dim, self.action_dim, self.max_size, self.batch_size)
+
+        self.update_network_parameters(tau=1)
+
+
+    def update_network_parameters(self, tau = None):
+        if tau == None:
+            tau = self.tau
         
-    
+        for q_eual_param, q_target_param in zip(self.eval_nn.parameters(), self.target_nn.parameters()):
+            q_target_param.data.copy_(q_eual_param.data * tau + (1 - tau) * q_target_param)
