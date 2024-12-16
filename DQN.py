@@ -71,3 +71,7 @@ class DQN:
         
         for q_eual_param, q_target_param in zip(self.eval_nn.parameters(), self.target_nn.parameters()):
             q_target_param.data.copy_(q_eual_param.data * tau + (1 - tau) * q_target_param)
+
+
+    def choose_action(self, state, isTrain=False):
+        state = torch.tensor([state], dtype=float).to(device)
