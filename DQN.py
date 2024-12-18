@@ -1,7 +1,9 @@
 from typing import Any, Mapping
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.nn.functional as F
 from ReplayBuffer import ReplayBuffer
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -26,7 +28,7 @@ class FCN(nn.Module):
         self.optimizer = optim.Adam(self.parameters, self.alpha)
         self.to(device)
 
-    def forward(self, state) -> torch.Tensor:
+    def forward(self, state : torch.Tensor) -> torch.Tensor:
         fc1_out_activated = torch.relu(self.fc1(state))
         fc2_out_activated = torch.relu(self.fc2(fc1_out_activated))
         q_out = self.q(fc2_out_activated)
@@ -40,9 +42,9 @@ class FCN(nn.Module):
     
 
 class DQN:
-    def __init__(self, alpha, state_dim, action_dim, hidden_dim1, hidden_dim2, chpt_dir, # 全连接网络相关
-                 tau, gamma, epsilon, eps_min, eps_dec, # DQN算法相关
-                 max_size, batch_size) -> None:
+    def __init__(self, alpha: float, state_dim: int, action_dim: int, hidden_dim1: int, hidden_dim2: int, chpt_dir: int, # 全连接网络相关
+                 tau:float, gamma:float, epsilon: float, eps_min: float, eps_dec: float, # DQN算法相关
+                 max_size: int, batch_size: int) -> None:
         self.alpha = alpha
         self.state_dim = state_dim
         self.action_dim = action_dim
@@ -75,6 +77,14 @@ class DQN:
 
     def choose_action(self, state, isTrain=False):
         state = torch.tensor([state], dtype=float).to(device)
+        action_q = self.eval_nn.forward(state)
+        action = torch.argmax(action_q, dim=-1).item()
+
+        if np.random.rand() < self.epsilon and isTrain:
+            action = np.random.choice(self.action_dim)
+        
+        return action
+        
 
     def remember(self, state, action, reward, next_state, terminal):
         self.replay_buffer.store_once(state, action, reward, next_state, terminal)
@@ -84,11 +94,28 @@ class DQN:
             return
 
         state_batch, action_batch, reward_batch, next_state_batch, terminal_batch = self.replay_buffer.sample_buffer()
-        batch_idx_isdone = terminal_batch == True
-        batch_idx_notdone = terminal_batch == False
+        batch_idx = np.arange(self.batch_size)
 
-        y_2 = self.gamma * torch.max(self.eval_nn(next_state_batch[batch_idx_notdone]), dim=-1) + reward_batch[batch_idx_notdone]
-        y_1 = reward_batch[batch_idx_isdone]
-        y = y_1 + y_2
+        state_batch = torch.tensor(state_batch, dtype=torch.float).to(device)
+        reward_batch = torch.tensor(reward_batch, dtype=torch.float).to(device)
+        next_state_batch = torch.tensor(next_state_batch, dtype=torch.float).to(device)
+        terminal_batch = torch.tensor(terminal_batch, dtype=torch.float)
 
-        y_1_t = torch.max(self.target_nn(state_batch))
+        with torch.no_grad:
+            q_ns = torch.max(self.target_nn.forward(next_state_batch), dim=-1)[0]
+            q_ns[terminal_batch] = 0
+            y_ = reward_batch + self.gamma * q_ns
+            
+        y = self.eval_nn.forward(state_batch)[batch_idx, action_batch]
+
+        loss = F.mse_loss(y, y_.detach())
+        self.eval_nn.optimizer.zero_grad()
+        loss.backward()
+        self.eval_nn.optimizer.step()
+
+        self.update_network_parameters()
+
+        if self.epsilon > self.eps_min:
+            self.epsilon -= self.eps_dec
+        else:
+            self.epsilon = self.eps_min
