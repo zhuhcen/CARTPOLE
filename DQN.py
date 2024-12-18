@@ -25,7 +25,7 @@ class FCN(nn.Module):
         self.fc2 = nn.Linear(self.hidden_dim1, self.hidden_dim2)
         self.q = nn.Linear(self.hidden_dim2, self.action_dim)
 
-        self.optimizer = optim.Adam(self.parameters, self.alpha)
+        self.optimizer = optim.Adam(self.parameters(), self.alpha)
         self.to(device)
 
     def forward(self, state : torch.Tensor) -> torch.Tensor:
@@ -40,9 +40,17 @@ class FCN(nn.Module):
     def load_model(self, ckpt_dir):
         self.load_state_dict(torch.load(ckpt_dir))
     
-
+'''
+DQN要素
+--------
+-决策过程
+--能根据当前状态选择动作（choose_action）
+-训练过程
+--根据replay_buffer中的数据，以及公式得出损失函数，进行梯度更新(learn)
+--评估网络与目标网络 参数之间的更新(update_network_parameters)
+'''
 class DQN:
-    def __init__(self, alpha: float, state_dim: int, action_dim: int, hidden_dim1: int, hidden_dim2: int, chpt_dir: int, # 全连接网络相关
+    def __init__(self, alpha: float, state_dim: int, action_dim: int, hidden_dim1: int, hidden_dim2: int, chpt_dir: str|None, # 全连接网络相关
                  tau:float, gamma:float, epsilon: float, eps_min: float, eps_dec: float, # DQN算法相关
                  max_size: int, batch_size: int) -> None:
         self.alpha = alpha
@@ -68,6 +76,8 @@ class DQN:
 
 
     def update_network_parameters(self, tau = None):
+        '''
+        tau等于1时为hard update，表示target网络完全使用eval网络的参数'''
         if tau == None:
             tau = self.tau
         
