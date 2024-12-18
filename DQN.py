@@ -26,7 +26,7 @@ class FCN(nn.Module):
         self.optimizer = optim.Adam(self.parameters, self.alpha)
         self.to(device)
 
-    def forward(self, state) -> any:
+    def forward(self, state) -> torch.Tensor:
         fc1_out_activated = torch.relu(self.fc1(state))
         fc2_out_activated = torch.relu(self.fc2(fc1_out_activated))
         q_out = self.q(fc2_out_activated)
@@ -75,3 +75,20 @@ class DQN:
 
     def choose_action(self, state, isTrain=False):
         state = torch.tensor([state], dtype=float).to(device)
+
+    def remember(self, state, action, reward, next_state, terminal):
+        self.replay_buffer.store_once(state, action, reward, next_state, terminal)
+
+    def learn(self):
+        if not self.replay_buffer.ready():
+            return
+
+        state_batch, action_batch, reward_batch, next_state_batch, terminal_batch = self.replay_buffer.sample_buffer()
+        batch_idx_isdone = terminal_batch == True
+        batch_idx_notdone = terminal_batch == False
+
+        y_2 = self.gamma * torch.max(self.eval_nn(next_state_batch[batch_idx_notdone]), dim=-1) + reward_batch[batch_idx_notdone]
+        y_1 = reward_batch[batch_idx_isdone]
+        y = y_1 + y_2
+
+        y_1_t = torch.max(self.target_nn(state_batch))

@@ -33,6 +33,16 @@ class ReplayBuffer:
         self.buffer_cnt += 1
 
     def sample_buffer(self):
+        '''
+        从replay_buffer中随机采样batch_size个数据用来训练
+        
+        Args:
+            None
+        
+        Returns:
+            Tuple[state_batch, action_batch, reward_batch, next_state_batch, terminal_batch]
+
+        '''
         buffer_len = min(self.buffer_cnt, self.max_size)
 
         idx_batch = np.random.choice(buffer_len, self.batch_size, replace=False)
