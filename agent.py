@@ -9,4 +9,6 @@ def main():
     agent = DQN(5e-5, env.observation_space.shape[0], env.action_space.n, 256, 256, None, 0.005, 0.99, 1, 0.05, 5e-4, 10000, 256)
 
     for i in range(max_episodes):
-        init_obs = env.reset()
+        init_obs = env.reset()[0]
+        action = agent.choose_action(init_obs, isTrain=True)
+        next_state, reward, terminal, truncated, _ = env.step(action)

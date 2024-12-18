@@ -85,7 +85,7 @@ class DQN:
             q_target_param.data.copy_(q_eual_param.data * tau + (1 - tau) * q_target_param)
 
 
-    def choose_action(self, state, isTrain=False):
+    def choose_action(self, state:np.ndarray, isTrain=False):
         state = torch.tensor([state], dtype=float).to(device)
         action_q = self.eval_nn.forward(state)
         action = torch.argmax(action_q, dim=-1).item()
