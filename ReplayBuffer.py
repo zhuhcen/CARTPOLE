@@ -17,7 +17,7 @@ class ReplayBuffer:
         # output
         self.reward_buffer = np.zeros((self.max_size, ))
         self.next_state_buffer = np.zeros((self.max_size, self.state_dim))
-        self.terminal_buffer = np.zeros((self.max_size,), dtype=np.bool)
+        self.terminal_buffer = np.zeros((self.max_size,), dtype=np.bool_)
 
         self.buffer_cnt = 0
 

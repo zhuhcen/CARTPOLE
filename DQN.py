@@ -45,12 +45,14 @@ DQN要素
 --------
 -决策过程
 --能根据当前状态选择动作（choose_action）
+-数据收集
+--将探索过程中的经验收集到replay_buffer中（remember）
 -训练过程
 --根据replay_buffer中的数据，以及公式得出损失函数，进行梯度更新(learn)
 --评估网络与目标网络 参数之间的更新(update_network_parameters)
 '''
 class DQN:
-    def __init__(self, alpha: float, state_dim: int, action_dim: int, hidden_dim1: int, hidden_dim2: int, chpt_dir: str|None, # 全连接网络相关
+    def __init__(self, alpha: float, state_dim: int, action_dim: int, hidden_dim1: int, hidden_dim2: int, chpt_dir: str, # 全连接网络相关
                  tau:float, gamma:float, epsilon: float, eps_min: float, eps_dec: float, # DQN算法相关
                  max_size: int, batch_size: int) -> None:
         self.alpha = alpha
@@ -86,7 +88,7 @@ class DQN:
 
 
     def choose_action(self, state:np.ndarray, isTrain=False):
-        state = torch.tensor([state], dtype=float).to(device)
+        state = torch.tensor([state], dtype=torch.float).to(device)
         action_q = self.eval_nn.forward(state)
         action = torch.argmax(action_q, dim=-1).item()
 
@@ -109,9 +111,9 @@ class DQN:
         state_batch = torch.tensor(state_batch, dtype=torch.float).to(device)
         reward_batch = torch.tensor(reward_batch, dtype=torch.float).to(device)
         next_state_batch = torch.tensor(next_state_batch, dtype=torch.float).to(device)
-        terminal_batch = torch.tensor(terminal_batch, dtype=torch.float)
+        terminal_batch = torch.tensor(terminal_batch, dtype=torch.bool).to(device)
 
-        with torch.no_grad:
+        with torch.no_grad():
             q_ns = torch.max(self.target_nn.forward(next_state_batch), dim=-1)[0]
             q_ns[terminal_batch] = 0
             y_ = reward_batch + self.gamma * q_ns
