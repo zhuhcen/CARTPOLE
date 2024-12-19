@@ -5,7 +5,8 @@ import numpy as np
 from utils import *
 
 max_episodes = 1000
-render_mode = ""
+render_mode = "human"
+# render_mode = ''
 
 def main():
     if render_mode == "human":
