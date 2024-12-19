@@ -7,12 +7,14 @@ from utils import *
 max_episodes = 1000
 render_mode = "human"
 # render_mode = ''
+# playground = "CartPole-v1"
+playground = "MountainCar-v0"
 
 def main():
     if render_mode == "human":
-        env = gym.make("CartPole-v1", render_mode="human")
+        env = gym.make(playground, render_mode="human")
     else:
-        env = gym.make("CartPole-v1")
+        env = gym.make(playground)
     agent = DQN(5e-5, env.observation_space.shape[0], env.action_space.n, 256, 256, None, 0.005, 0.99, 1, 0.05, 5e-4, 10000, 256)
 
 
