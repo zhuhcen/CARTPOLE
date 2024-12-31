@@ -17,7 +17,7 @@ def main():
         env = gym.make(playground, render_mode="human")
     else:
         env = gym.make(playground)
-    agent = DDQN(5e-4, env.observation_space.shape[0], env.action_space.n, 256, 256, None, 0.005, 0.99, 1, 0.05, 5e-5, 1000000, 256)
+    agent = DDQN(5e-4, env.observation_space.shape[0], env.action_space.n, 256, 256, "D:/study/rl/CartPole", 0.005, 0.99, 1, 0.05, 5e-5, 1000000, 256)
     # agent = DQN(5e-4, env.observation_space.shape[0], env.action_space.n, 256, 256, None, 0.005, 0.99, 1, 0.05, 5e-5, 1000000, 256)
 
 
@@ -46,9 +46,9 @@ def main():
               format(i+1, total_reward_per_epi, avg_reward, agent.epsilon))
         
     episodes = [i for i in range(max_episodes)]
-    plot_learning_curve(episodes, avg_rewards, 'Reward_avg', 'reward_avg', 'D:\\study\\rl\CartPole\\reward_avg.png')
-    plot_learning_curve(episodes, total_rewards, 'Reward', 'reward', 'D:\\study\\rl\\CartPole\\reward.png')
-    plot_learning_curve(episodes, eps_history, 'Epsilon', 'epsilon', 'D:\\study\\rl\\CartPole\\epsilon.png')
+    plot_learning_curve(episodes, avg_rewards, 'Reward_avg', 'reward_avg', 'D:/study/rl\CartPole/reward_avg.png')
+    plot_learning_curve(episodes, total_rewards, 'Reward', 'reward', 'D:/study/rl/CartPole/reward.png')
+    plot_learning_curve(episodes, eps_history, 'Epsilon', 'epsilon', 'D:/study/rl/CartPole/epsilon.png')
 
 
 
