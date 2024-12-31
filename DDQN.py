@@ -49,9 +49,13 @@ class FCN(nn.Module):
 DDQN设计要素
 ------------
 -网络更新
---将eval_nn网络的参数更新给target_nn（update_network_parameters）
+---将eval_nn网络的参数更新给target_nn（update_network_parameters）
 -从replay_buffer中拿出经验数据进行学习
---拿出数据学习（learn）
+---拿出数据学习（learn）
+-agent用于存储数据
+---对agent保留存储数据的接口（remember）
+-决策
+---随机挑选action或者根据已经学到的规则选择最大q的action（choose_action）
 '''
 class DDQN():
     def __init__(self, action_dim, state_dim, hidden_dim1, hidden_dim2, 
@@ -112,3 +116,16 @@ class DDQN():
         loss.backward()
         self.eval_nn.optimizer.step()
 
+        self.update_network_parameters()
+
+        self.epsilon = self.epsilon-self.eps_des if self.epsilon > self.eps_min else self.eps_min
+
+    def remember(self, state, action, reward, next_state, terminal):
+        self.replay_buffer.store_once(state, action, reward, next_state, terminal)
+
+    
+    def choose_action(self, state) -> int:
+        if np.random.rand() < self.epsilon:
+            return np.random.choice(self.action_dim)
+        else:
+            return torch.max(self.eval_nn.forward(state))[1]
