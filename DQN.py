@@ -84,7 +84,7 @@ class DQN:
             tau = self.tau
         
         for q_eual_param, q_target_param in zip(self.eval_nn.parameters(), self.target_nn.parameters()):
-            q_target_param.data.copy_(q_eual_param.data * tau + (1 - tau) * q_target_param)
+            q_target_param.data.copy_(q_eual_param * tau + (1 - tau) * q_target_param)
 
 
     def choose_action(self, state:np.ndarray, isTrain=False):

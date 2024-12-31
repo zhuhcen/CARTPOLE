@@ -58,9 +58,9 @@ DDQN设计要素
 ---随机挑选action或者根据已经学到的规则选择最大q的action（choose_action）
 '''
 class DDQN():
-    def __init__(self, action_dim, state_dim, hidden_dim1, hidden_dim2, 
-                 alpha, tau, gamma, epsilon, eps_min, eps_des,
-                 max_size, batch_size) -> None:
+    def __init__(self, alpha: float, state_dim: int, action_dim: int, hidden_dim1: int, hidden_dim2: int, chpt_dir: str, # 全连接网络相关
+                 tau:float, gamma:float, epsilon: float, eps_min: float, eps_dec: float, # DQN算法相关
+                 max_size: int, batch_size: int) -> None:
         self.action_dim = action_dim
         self.state_dim = state_dim
         self.hidden_dim1 = hidden_dim1
@@ -70,7 +70,7 @@ class DDQN():
         self.gamma = gamma
         self.epsilon = epsilon
         self.eps_min = eps_min
-        self.eps_des = eps_des
+        self.eps_dec = eps_dec
         self.max_size = max_size
         self.batch_size = batch_size
 
@@ -78,14 +78,16 @@ class DDQN():
         self.target_nn = FCN(self.alpha, self.state_dim, self.action_dim, self.hidden_dim1, self.hidden_dim2)
 
         self.replay_buffer = ReplayBuffer(self.state_dim, self.action_dim, self.max_size, self.batch_size)
-
+        # 重要
+        self.update_network_parameters(tau=1)
 
     def update_network_parameters(self, tau = None):
         if tau == None:
             tau = self.tau
         
-        for eval_nn_param, target_nn_param in zip(self.eval_nn.parameters(), self.target_nn.parameters()):
-            target_nn_param.copy_(eval_nn_param * tau + target_nn_param * (1 - tau))  
+        with torch.no_grad():
+            for eval_nn_param, target_nn_param in zip(self.eval_nn.parameters(), self.target_nn.parameters()):
+                target_nn_param.copy_(eval_nn_param * tau + target_nn_param * (1 - tau))  
 
     def learn(self):
         if not self.replay_buffer.ready():
@@ -94,11 +96,11 @@ class DDQN():
         state_batch, action_batch, reward_batch, next_state_batch, terminal_batch = self.replay_buffer.sample_buffer()
         batch_idx = np.arange(self.batch_size)
 
-        state_batch = torch.tensor(state_batch, torch.float).to(device)
+        state_batch = torch.tensor(state_batch, dtype=torch.float).to(device)
         # action_batch = torch.tensor(action_batch, torch.int).to(device)
-        reward_batch = torch.tensor(reward_batch, torch.float).to(device)
-        next_state_batch = torch.tensor(next_state_batch, torch.float).to(device)
-        terminal_batch = torch.tensor(terminal_batch, torch.bool).to(device)
+        reward_batch = torch.tensor(reward_batch, dtype=torch.float).to(device)
+        next_state_batch = torch.tensor(next_state_batch, dtype=torch.float).to(device)
+        terminal_batch = torch.tensor(terminal_batch, dtype=torch.bool).to(device)
 # ------------------------------------------------------------------------------------------
 # 尝试写DDQN的主要逻辑
         y = self.eval_nn.forward(state_batch)[batch_idx, action_batch]
@@ -118,14 +120,15 @@ class DDQN():
 
         self.update_network_parameters()
 
-        self.epsilon = self.epsilon-self.eps_des if self.epsilon > self.eps_min else self.eps_min
+        self.epsilon = self.epsilon-self.eps_dec if self.epsilon > self.eps_min else self.eps_min
 
     def remember(self, state, action, reward, next_state, terminal):
         self.replay_buffer.store_once(state, action, reward, next_state, terminal)
 
     
-    def choose_action(self, state) -> int:
-        if np.random.rand() < self.epsilon:
+    def choose_action(self, state, isTrain) -> int:
+        if np.random.rand() < self.epsilon and isTrain:
             return np.random.choice(self.action_dim)
         else:
-            return torch.max(self.eval_nn.forward(state))[1]
+            state = torch.tensor([state], dtype=torch.float).to(device)
+            return torch.argmax(self.eval_nn.forward(state), dim=-1).item()
